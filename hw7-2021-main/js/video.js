@@ -5,14 +5,17 @@ var SPEED_FAST_FACTOR = 1 / SPEED_SLOW_FACTOR;
 
 function updateVolumeInfo() {
 	var volEl = document.querySelector("#volume");
-	if (!volEl || !video) {
+	var slider = document.querySelector("#slider");
+	if (!volEl || !video || !slider) {
 		return;
 	}
-	var pct = Math.round(video.volume * 100);
+	if (!video.muted) {
+		video.volume = Number(slider.value) / 100;
+	}
 	if (video.muted) {
 		volEl.innerHTML = "0%";
 	} else {
-		volEl.innerHTML = pct + "%";
+		volEl.innerHTML = Math.round(Number(slider.value)) + "%";
 	}
 }
 
@@ -28,11 +31,22 @@ window.addEventListener("load", function() {
 
 	console.log("Video element initialized; autoplay and looping are off.");
 
+	video.addEventListener("play", function() {
+		updateVolumeInfo();
+	});
+
 	updateVolumeInfo();
 
 	document.querySelector("#play").addEventListener("click", function() {
-		video.play();
+		var playPromise = video.play();
 		updateVolumeInfo();
+		if (playPromise !== undefined) {
+			playPromise.then(function() {
+				updateVolumeInfo();
+			}).catch(function() {
+				updateVolumeInfo();
+			});
+		}
 	});
 
 	document.querySelector("#pause").addEventListener("click", function() {
